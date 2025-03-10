@@ -112,7 +112,6 @@ class _ListFilieresState extends State<ListFilieres> {
   }
 
   Widget _buildFiliereCard(Filiere filiere) {
- 
     return Padding(
       padding: const EdgeInsets.all(15.0),
       child: InkWell(

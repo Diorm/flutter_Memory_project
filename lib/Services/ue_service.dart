@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:school_management_system/Classes/ue.dart';
 import 'package:http/http.dart' as http;
@@ -21,9 +22,6 @@ class UeService {
 
   Future<List<UE>> getUesBySemestre(int semestreId) async {
     final response = await http.get(Uri.parse('$baseUrl/semestre/$semestreId'));
-    print("Réponse de l'API : ${response.body}");
-    print("Code de la réponse de l'API : ${response.statusCode}");
-    print("URL de l'API : $baseUrl/semestre/$semestreId");
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       List<dynamic> data = json.decode(response.body);
@@ -34,42 +32,28 @@ class UeService {
   }
 
   //Create
-  // Future<void> addUeToSemestre(int semestreId, String nomUe) async {
-  //   final response = await http.post(
-  //     Uri.parse('$baseUrl/semestre/$semestreId'),
-  //     headers: {'Content-Type': 'application/json'},
-  //     body: json.encode({'nomUe': nomUe}),
-  //   );
 
-  //   if (response.statusCode == 200 || response.statusCode == 201) {
-  //     print("UE ajoutée avec succès");
-  //   } else if (response.statusCode == 400) {
-  //     throw Exception('L\'UE existe déjà');
-  //   } else {
-  //     throw Exception('Échec de l\'ajout de l\'ue');
-  //   }
-  // }
   Future<void> addUeToSemestre(int semestreId, UE ue) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/semestre/$semestreId'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'nomUE': ue.nomUE,
-        'codeUE': ue.codeUE,
-        'nbreCredit': ue.nbreCredit,
-        'filiere': ue.filiere, // ID ou objet JSON valide
-        'semestreId': ue.semestreId,
-        'dateAjout': ue.dateAjout?.toIso8601String(),
-        'niveau': ue.niveau, // Doit être un ID ou un objet JSON
-      }),
-    );
+    final url = Uri.parse('$baseUrl/$semestreId/ue');
+    final headers = {'Content-Type': 'application/json'};
+    final body = json.encode(ue.toJson());
 
-    if (response.statusCode == 201) {
-      print("UE ajoutée avec succès");
-    } else if (response.statusCode == 409) {
-      throw Exception("L'UE existe déjà");
+    print("Ajout d'une UE à un Semestre");
+    print("URL: $url");
+    print("Body: $body");
+
+    final response = await http.post(url, headers: headers, body: body);
+
+    print("Statut de la réponse: ${response.statusCode}");
+    print("Réponse: ${response.body}");
+    print("JSON envoyé : ${jsonEncode(ue.toJson())}");
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      print("UE ajoutée avec succès !");
     } else {
-      throw Exception("Échec de l'ajout de l'UE");
+      print("Erreur lors de l'ajout de l'UE : ${response.body}");
+      print("Statut: ${response.statusCode}");
+      throw Exception("Erreur lors de l'ajout de l'UE : ${response.body}");
     }
   }
 
@@ -81,6 +65,9 @@ class UeService {
         'Content-Type': 'application/json; charset=UTF-8',
       },
     );
+    print("Response de la supression");
+    print(response.body);
+    print(response.statusCode);
 
     if (response.statusCode != 204) {
       throw Exception('Échec de la suppression de l\'ue');
@@ -88,23 +75,45 @@ class UeService {
   }
 
   //Update
-  Future<UE> updateUe(UE ue) async {
+  Future<void> updateUE(int id, UE ue) async {
+    final url = Uri.parse('$baseUrl/$id');
     final response = await http.put(
-      Uri.parse('$baseUrl/${ue.id}'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: json.encode(ue
-          .toJson()), // Utilise toJson() pour formater correctement les données
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(ue.toJson()),
     );
-
+    print("Recuperation de la methode updateUE");
+    print('$baseUrl/ue/$id');
+    print(response.statusCode);
+    print(response);
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return UE
-          .fromJson(json.decode(response.body)); // Parse la réponse en objet UE
+      // Mise à jour réussie
+      print('UE mise à jour avec succès');
+    } else if (response.statusCode == 404) {
+      // UE non trouvée
+      print('UE non trouvée');
     } else {
-      throw Exception('Échec de la mise à jour de l\'ue : ${response.body}');
+      // Autre erreur
+      print('Erreur lors de la mise à jour: ${response.statusCode}');
     }
   }
+  // Future<UE> updateUe(UE ue) async {
+  //   final response = await http.put(
+  //     Uri.parse('$baseUrl/${ue.id}'),
+  //     headers: <String, String>{
+  //       'Content-Type': 'application/json; charset=UTF-8',
+  //     },
+  //     body: json.encode(ue
+  //         .toJson()), // Utilise toJson() pour formater correctement les données
+  //   );
+
+  //   if (response.statusCode == 200 || response.statusCode == 201) {
+  //     return UE
+  //         .fromJson(json.decode(response.body)); // Parse la réponse en objet UE
+  //   } else {
+  //     throw Exception('Échec de la mise à jour de l\'ue : ${response.body}');
+  //   }
+  // }
 
   //Get by id
   Future<UE> getUeById(int id) async {
@@ -119,7 +128,7 @@ class UeService {
   //Verification de l'existence d'une UE
   Future<bool> ueExist(String nomUe, int semestreId) async {
     final response = await http
-        .get(Uri.parse('$baseUrl/semestre/$semestreId/ue-exist?nomUE=$nomUe'));
+        .get(Uri.parse('$baseUrl/exists?nomUE=$nomUe&semestreId=$semestreId'));
 
     print("Réponse de l'API : ${response.body}");
     print("Code de la réponse de l'API : ${response.statusCode}");

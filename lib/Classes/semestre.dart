@@ -1,20 +1,29 @@
+import 'package:school_management_system/Classes/filiere.dart';
+import 'package:school_management_system/Classes/niveau.dart';
 import 'package:school_management_system/Classes/ue.dart';
 
 class Semestre {
-  final int? id;
+  final int id;
   final String nomSemestre;
-  final int? niveauId;
+  final Niveau niveau;
+  final Filiere filiere;
   final List<UE> ues;
 
-  Semestre(
-      {this.id, required this.nomSemestre, this.niveauId, this.ues = const []});
+  Semestre({
+    required this.id,
+    required this.nomSemestre,
+    required this.niveau,
+    required this.filiere,
+    this.ues = const [],
+  });
 
   factory Semestre.fromJson(Map<String, dynamic> json) {
     return Semestre(
       id: json['id'],
       nomSemestre: json['nomSemestre'],
-      niveauId: json['niveauId'],
-      ues: (json['ues'] as List).map((ue) => UE.fromJson(ue)).toList(),
+      niveau: Niveau.fromJson(json['niveau']), // Correction ici
+      filiere: Filiere.fromJson(json['filiere']), // Correction ici
+      ues: (json['ues'] as List?)?.map((ue) => UE.fromJson(ue)).toList() ?? [],
     );
   }
 
@@ -22,7 +31,8 @@ class Semestre {
     return {
       'id': id,
       'nomSemestre': nomSemestre,
-      'niveau': {'id': niveauId}, // Envoyez un objet niveau avec id
+      'niveau': niveau.toJson(), // Correction ici
+      'filiere': filiere.toJson(), // Correction ici
       'ues': ues.map((ue) => ue.toJson()).toList(),
     };
   }

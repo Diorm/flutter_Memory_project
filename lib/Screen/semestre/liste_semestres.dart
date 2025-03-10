@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:school_management_system/Classes/filiere.dart';
 import 'package:school_management_system/Classes/niveau.dart';
 import 'package:school_management_system/Classes/semestre.dart';
+import 'package:school_management_system/Screen/UEs/add_ue-Screen.dart';
 import 'package:school_management_system/Screen/UEs/ue_by_semestre.dart';
+import 'package:school_management_system/Services/niveau_service.dart';
 import 'package:school_management_system/Services/semestre_service.dart';
 import 'package:school_management_system/Widgets/drawer.dart';
 import 'package:school_management_system/theme/colors.dart';
@@ -53,6 +56,73 @@ class _ListeSemestresState extends State<ListeSemestres> {
     return acronym.toUpperCase();
   }
 
+  Future<void> saveSemestre(String nomSemestre) async {
+    if (widget.niveau.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Erreur : ID du niveau manquant."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Récupérer la filière associée au niveau
+      Filiere? filiere =
+          await NiveauService().getFiliereByNiveauId(widget.niveau.id!);
+
+      if (filiere == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text("Erreur : La filière associée au niveau est manquante."),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Vérifier si le semestre existe déjà
+      bool exists =
+          await SemestreService().semestreExist(nomSemestre, widget.niveau.id!);
+      if (exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Un Semestre avec ce nom existe déjà."),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Ajouter le semestre au niveau avec la filière récupérée
+      await SemestreService().addSemestreToNiveau(widget.niveau.id!,
+          nomSemestre, filiere // Passe la filière récupérée ici
+          );
+
+      setState(() {
+        futureSemestres =
+            SemestreService().getSemestreByNiveau(widget.niveau.id!);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Semestre ajouté avec succès."),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Erreur lors de l'ajout : $error"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      print("Erreur lors de l'ajout : $error");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,7 +139,7 @@ class _ListeSemestresState extends State<ListeSemestres> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: myredColor,
         onPressed: () {
-          addDialog();
+          addSemestre();
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -113,8 +183,9 @@ class _ListeSemestresState extends State<ListeSemestres> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    UeBySemestre(semestre: semes),
+                                builder: (context) => UeBySemestre(
+                                  semestre: semes,
+                                ),
                               ),
                             );
                           },
@@ -195,7 +266,7 @@ class _ListeSemestresState extends State<ListeSemestres> {
     );
   }
 
-  void addDialog() {
+  void addSemestre() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -246,12 +317,12 @@ class _ListeSemestresState extends State<ListeSemestres> {
               onPressed: () {
                 if (selectedSemestre != null && selectedSemestre!.isNotEmpty) {
                   saveSemestre(selectedSemestre!).then((_) {
-                    Navigator.of(context).pop();
+                    Navigator.pop(context);
                   });
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text("Veuillez sélectionner un semestre"),
+                      content: Text("Veuillez sélectionner un Semestre"),
                     ),
                   );
                 }
@@ -262,56 +333,6 @@ class _ListeSemestresState extends State<ListeSemestres> {
         );
       },
     );
-  }
-
-  Future<void> saveSemestre(String niveauName) async {
-    if (widget.niveau.id == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Erreur : L'ID de la filière est manquant."),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    try {
-      bool exists =
-          await SemestreService().semestreExist(niveauName, widget.niveau.id!);
-      if (exists) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text("Un Semestre avec ce nom existe déjà dans cette filière."),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      await SemestreService()
-          .addSemestreToNiveau(widget.niveau.id!, niveauName);
-
-      setState(() {
-        futureSemestres =
-            SemestreService().getSemestreByNiveau(widget.niveau.id!);
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Semestre ajouté avec succès."),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Erreur lors de l'ajout : $error"),
-          backgroundColor: Colors.red,
-        ),
-      );
-      print("Erreur lors de l'ajout : $error");
-    }
   }
 
   // Supprimer un niveau

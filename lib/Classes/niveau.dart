@@ -1,15 +1,16 @@
+import 'package:school_management_system/Classes/filiere.dart';
 import 'package:school_management_system/Classes/semestre.dart';
 
 class Niveau {
   final int? id;
   final String nomNiveau;
-  final int? filiereId;
+  final Filiere? filiere;
   final List<Semestre> semestres;
 
   Niveau({
     this.id,
     required this.nomNiveau,
-    this.filiereId,
+    this.filiere,
     this.semestres = const [],
   });
 
@@ -17,12 +18,13 @@ class Niveau {
     return Niveau(
       id: json['id'],
       nomNiveau: json['nomNiveau'],
-      filiereId: json['filiere']?['id'], // ✅ Correction ici
-      semestres: (json['semestres'] != null)
-          ? (json['semestres'] as List)
-              .map((semestre) => Semestre.fromJson(semestre))
-              .toList()
-          : [],
+      filiere: json['filiere'] != null
+          ? Filiere.fromJson(json['filiere'])
+          : null, // Correction ici
+      semestres: (json['semestres'] as List?)
+              ?.map((s) => Semestre.fromJson(s))
+              .toList() ??
+          [],
     );
   }
 
@@ -30,8 +32,8 @@ class Niveau {
     return {
       'id': id,
       'nomNiveau': nomNiveau,
-      'filiereId': filiereId,
-      'semestres': semestres.map((semestre) => semestre.toJson()).toList(),
+      'filiere': filiere?.toJson(), // Correction ici
+      'semestres': semestres.map((s) => s.toJson()).toList(),
     };
   }
 }

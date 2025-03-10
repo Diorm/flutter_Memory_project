@@ -1,191 +1,313 @@
-// import 'dart:developer';
-
 // import 'package:flutter/material.dart';
+// import 'package:school_management_system/Classes/filiere.dart';
+// import 'package:school_management_system/Classes/niveau.dart';
+// import 'package:school_management_system/Classes/semestre.dart';
 // import 'package:school_management_system/Classes/ue.dart';
+// import 'package:school_management_system/Services/filiere_service.dart';
+// import 'package:school_management_system/Services/niveau_service.dart';
+// import 'package:school_management_system/Services/semestre_service.dart';
 // import 'package:school_management_system/Services/ue_service.dart';
 // import 'package:school_management_system/Widgets/drawer.dart';
 // import 'package:school_management_system/theme/colors.dart';
 
-
-// class ListeDesUe extends StatefulWidget {
-//   const ListeDesUe({super.key});
+// class ListeDesUES extends StatefulWidget {
+//   final Semestre semestre;
+//   const ListeDesUES({super.key, required this.semestre});
 
 //   @override
-//   _ListeDesUeState createState() => _ListeDesUeState();
+//   State<ListeDesUES> createState() => _ListeDesUESState();
 // }
 
-// class _ListeDesUeState extends State<ListeDesUe> {
-
+// class _ListeDesUESState extends State<ListeDesUES> {
 //   late Future<List<UE>> futureUes;
-
-//   final TextEditingController _codeUEController = TextEditingController();
-//   final TextEditingController _nomUEController = TextEditingController();
-//   String? selectedSession;
-//   List<UE> ues = [];
-
+//   late List<Filiere> filieres = [];
+//   late List<Niveau> niveaux = [];
 //   final _formKey = GlobalKey<FormState>();
-
-//   int? selectedNiveau;
-//   int? selectedFiliere;
-//   List<Niveau> filteredNiveaux = []; // Liste des niveaux filtrés
-//   List<Niveau> allNiveaux = []; // Liste de tous les niveaux
-//   List<Semestre> allSemestres = []; // Liste de tous les niveaux
-//   List<Semestre> filtredSemestres = []; // Liste de tous les niveaux
-
-//   int? selectedSemestre;
-
- 
+//   final _codeUEController = TextEditingController();
+//   final _nonUEController = TextEditingController();
+//   late int? selectedFiliere = 0;
+//   late int? selectedNiveau = 0;
+//   late List<Niveau> filteredNiveaux = [];
+//   late List<Niveau> allNiveaux = [];
 //   @override
 //   void initState() {
+//     // TODO: implement initState
 //     super.initState();
-//     futureUes =UeService().getUes();
+//     futureUes = UeService().getUesBySemestre(widget.semestre.id);
 //   }
-
 
 //   @override
 //   Widget build(BuildContext context) {
 //     return Scaffold(
 //       appBar: AppBar(
 //         iconTheme: const IconThemeData(color: Colors.white),
-//         backgroundColor: Colors.white,
+//         backgroundColor: Colors.black,
 //         centerTitle: true,
-//         title: const Text(
-//           "UNITES D'ENSEIGNEMENTS",
+//         title: Text(
+//           " ${widget.semestre.nomSemestre} Liste des UEs",
 //           style: TextStyle(
-//             fontSize: 25,
-//             fontWeight: FontWeight.bold,
-//             color: Colors.black,
-//           ),
+//               fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
 //         ),
+//       ),
+//       floatingActionButton: FloatingActionButton(
+//         backgroundColor: myredColor,
+//         onPressed: () {
+//           addUE();
+//         },
+//         child: const Icon(Icons.add, color: Colors.white),
 //       ),
 //       body: Row(
 //         children: [
 //           MyDrawer(),
 //           Expanded(
-//             child: FutureBuilder(
-//               future: futureUes, // Votre future ici
-//               builder:
-//                   (BuildContext context, AsyncSnapshot<List<UE>> snapshot) {
+//             child: FutureBuilder<List<UE>>(
+//               future: futureUes,
+//               builder: (context, snapshot) {
 //                 if (snapshot.connectionState == ConnectionState.waiting) {
-//                   return const Center(child: CircularProgressIndicator());
-//                 } else if (snapshot.hasData && snapshot.data!.isEmpty) {
-//                   return const Center(child: Text("Aucun UE trouvée !!!"));
-//                 } else if (snapshot.hasError) {
-//                   return Text(snapshot.error.toString());
-//                 } else {
-//                   final List<UE> items = snapshot.data ?? <UE>[];
-//                   return ListView.builder(
-//                     itemCount: items.length,
-//                     itemBuilder: (context, index) {
-//                       final UE ues = items[index];
-//                       return Padding(
-//                         padding: const EdgeInsets.all(8.0),
-//                         child: Card(
-//                           shape: RoundedRectangleBorder(
-//                             borderRadius: BorderRadius.circular(15),
-//                           ),
-//                           elevation: 3,
-//                           child: ListTile(
-//                             // leading: CircleAvatar(
-//                             //   backgroundColor: Colors.transparent,
-//                             //   radius: 30,
-//                             //   child: Text(
-//                             //     session.id.toString(),
-//                             //     style: TextStyle(
-//                             //         color: myredColor,
-//                             //         fontWeight: FontWeight.bold,
-//                             //         fontSize: 20),
-//                             //   ),
-//                             // ),
-//                             title: Text("${ues.nomUE}"),
-//                             titleTextStyle: const TextStyle(
-//                                 fontWeight: FontWeight.bold,
-//                                 color: Colors.black,
-//                                 fontSize: 20),
-//                             subtitle: Row(
-//                               children: [
-//                                 Text("Crédits"),
-//                                 SizedBox(
-//                                   width: 10,
-//                                 ),
-//                                 Text(
-//                                   ues.nbreCredit.toString(),
-//                                   style: TextStyle(
-//                                       color: myredColor,
-//                                       fontWeight: FontWeight.bold),
-//                                 ),
-//                               ],
-//                             ),
-
-//                             trailing: IconButton(
-//                               icon: const Icon(Icons.delete, color: Colors.red),
-//                               onPressed: () {
-//                                 showDialog(
-//                                   context: context,
-//                                   builder: (context) {
-//                                     return AlertDialog(
-//                                       title: Text("Suppression"),
-//                                       content: Text(
-//                                           "Voulez-vous vraiment retirer cette UE de la liste ?"),
-//                                       actions: [
-//                                         TextButton(
-//                                           onPressed: () {
-//                                             Navigator.pop(context);
-//                                           },
-//                                           child: Text(
-//                                             "Annuler",
-//                                             style:
-//                                                 TextStyle(color: myblueColor),
-//                                           ),
-//                                         ),
-//                                         TextButton(
-//                                           onPressed: () {
-//                                             (ues.id);
-//                                             Navigator.pop(context);
-//                                           },
-//                                           child: Text(
-//                                             "Supprimer",
-//                                             style: TextStyle(color: myredColor),
-//                                           ),
-//                                         )
-//                                       ],
-//                                     );
-//                                   },
-//                                 );
-//                               },
-//                             ),
-//                             onTap: () {
-                          
-//                             },
-//                           ),
-//                         ),
-//                       );
-//                     },
+//                   return Center(
+//                     child: CircularProgressIndicator(),
 //                   );
+//                 } else if (snapshot.hasError) {
+//                   return Center(
+//                     child: Text("Erreur: ${snapshot.error}"),
+//                   );
+//                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+//                   return Center(
+//                     child: Text("Aucune UE trouvée"),
+//                   );
+//                 } else {
+//                   List<UE> items = snapshot.data!;
+//                   return ListView.builder(
+//                       itemCount: items.length,
+//                       itemBuilder: (context, index) {
+//                         UE ue = items[index];
+//                         return Padding(
+//                           padding: const EdgeInsets.all(8.0),
+//                           child: Card(
+//                             shape: RoundedRectangleBorder(
+//                               borderRadius: BorderRadius.circular(15),
+//                             ),
+//                             elevation: 3,
+//                             child: ListTile(
+//                               // leading: CircleAvatar(
+//                               //   backgroundColor: Colors.transparent,
+//                               //   radius: 30,
+//                               //   child: Text(
+//                               //     session.id.toString(),
+//                               //     style: TextStyle(
+//                               //         color: myredColor,
+//                               //         fontWeight: FontWeight.bold,
+//                               //         fontSize: 20),
+//                               //   ),
+//                               // ),
+//                               title: Text("UE ${ue.id}"),
+//                               titleTextStyle: const TextStyle(
+//                                   fontWeight: FontWeight.bold,
+//                                   color: Colors.black,
+//                                   fontSize: 20),
+//                               subtitle: Text(ue.nomUE),
+//                               subtitleTextStyle: TextStyle(
+//                                   color: myredColor,
+//                                   fontWeight: FontWeight.bold),
+//                               trailing: IconButton(
+//                                 onPressed: () {
+//                                   _confirmDelete(items[index].id!);
+//                                 },
+//                                 icon: Icon(
+//                                   Icons.delete,
+//                                   color: myredColor,
+//                                 ),
+//                               ),
+//                               onTap: () {},
+//                             ),
+//                           ),
+//                         );
+//                       });
 //                 }
 //               },
 //             ),
 //           ),
 //         ],
 //       ),
-//       floatingActionButton: FloatingActionButton(
-//         onPressed: () {
-//           addUE();
-//         },
-//         backgroundColor: myblueColor,
-//         child: const Icon(
-//           Icons.add,
-//           color: Colors.white,
-//         ),
-//       ),
 //     );
 //   }
 
-  
+//   void addUE() {
+//     showDialog(
+//         context: context,
+//         builder: (BuildContext context) {
+//           return StatefulBuilder(builder: (context, setState) {
+//             return AlertDialog(
+//               title: const Text("Ajouter une UE"),
+//               content: Form(
+//                 key: _formKey,
+//                 child: SingleChildScrollView(
+//                   child: Column(
+//                     mainAxisSize: MainAxisSize.min,
+//                     children: [
+//                       //Dropdown pour selectionner la filiere
+//                       FutureBuilder<List<Filiere>>(
+//                         future: FiliereService().getFilieres(),
+//                         builder: (context, snapshot) {
+//                           if (snapshot.connectionState ==
+//                               ConnectionState.waiting) {
+//                             return const Center(
+//                                 child: CircularProgressIndicator());
+//                           } else if (snapshot.hasError) {
+//                             return Center(
+//                                 child: Text("Erreur: ${snapshot.error}"));
+//                           } else if (!snapshot.hasData ||
+//                               snapshot.data!.isEmpty) {
+//                             return const Center(
+//                                 child: Text("Aucune filière trouvée"));
+//                           }
+
+//                           final filieres = snapshot.data!;
+//                           return DropdownButtonFormField<int>(
+//                             value: filieres.any(
+//                                     (filiere) => filiere.id == selectedFiliere)
+//                                 ? selectedFiliere
+//                                 : null,
+//                             decoration: const InputDecoration(
+//                               labelText: "Sélectionner une Filière",
+//                               border: OutlineInputBorder(),
+//                             ),
+//                             items: filieres.map((filiere) {
+//                               return DropdownMenuItem<int>(
+//                                 value: filiere.id,
+//                                 child: Text(filiere.nomFiliere),
+//                               );
+//                             }).toList(),
+//                             onChanged: (value) {
+//                               setState(() {
+//                                 selectedFiliere = value;
+//                                 selectedNiveau = null;
+//                               });
+//                             },
+//                             validator: (value) {
+//                               if (value == null)
+//                                 return "Veuillez sélectionner une filière";
+//                               return null;
+//                             },
+//                           );
+//                         },
+//                       ),
+//                       const SizedBox(height: 10),
+// // Utiliser une clé pour forcer la reconstruction du FutureBuilder
+//                       FutureBuilder<List<Niveau>>(
+//                         key: ValueKey(
+//                             selectedFiliere), // Clé unique basée sur selectedFiliere
+//                         future: selectedFiliere != null
+//                             ? NiveauService()
+//                                 .getNiveauxByFiliere(selectedFiliere!)
+//                             : Future.value(
+//                                 []), // Retourner une liste vide si selectedFiliere est null
+//                         builder: (context, snapshot) {
+//                           if (snapshot.connectionState ==
+//                               ConnectionState.waiting) {
+//                             return const Center(
+//                                 child: CircularProgressIndicator());
+//                           } else if (snapshot.hasError) {
+//                             return Center(
+//                                 child: Text("Erreur: ${snapshot.error}"));
+//                           } else if (!snapshot.hasData ||
+//                               snapshot.data!.isEmpty) {
+//                             return const Center(
+//                                 child: Text("Aucun niveau trouvé"));
+//                           }
+
+//                           final niveaux = snapshot.data!;
+//                           return DropdownButtonFormField<int>(
+//                             value: selectedNiveau,
+//                             decoration: const InputDecoration(
+//                               labelText: "Sélectionner un Niveau",
+//                               border: OutlineInputBorder(),
+//                             ),
+//                             items: niveaux.map((niveau) {
+//                               return DropdownMenuItem<int>(
+//                                 value: niveau.id,
+//                                 child: Text(niveau.nomNiveau),
+//                               );
+//                             }).toList(),
+//                             onChanged: (value) {
+//                               setState(() {
+//                                 selectedNiveau = value;
+//                               });
+//                             },
+//                             validator: (value) {
+//                               if (value == null)
+//                                 return "Veuillez sélectionner un niveau";
+//                               return null;
+//                             },
+//                           );
+//                         },
+//                       ),
+//                       TextFormField(
+//                         controller: _codeUEController,
+//                         decoration: const InputDecoration(
+//                           labelText: "Code de l'UE",
+//                         ),
+//                         validator: (value) {
+//                           if (value == null || value.isEmpty) {
+//                             return "Veuillez entrer le code de l'UE";
+//                           }
+//                           return null;
+//                         },
+//                       ),
+//                       SizedBox(
+//                         height: 10,
+//                       ),
+//                       TextFormField(
+//                         controller: _nonUEController,
+//                         decoration: const InputDecoration(
+//                           labelText: "Nom de l'UE",
+//                         ),
+//                         validator: (value) {
+//                           if (value == null || value.isEmpty) {
+//                             return "Veuillez entrer le code de l'UE";
+//                           }
+//                           return null;
+//                         },
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//               ),
+//               actions: [
+//                 TextButton(
+//                   onPressed: () {
+//                     Navigator.of(context).pop();
+//                   },
+//                   child: const Text("Annuler"),
+//                 ),
+//                 TextButton(
+//                   onPressed: () {
+//                     if (_formKey.currentState!.validate()) {
+//                       saveUE(_codeUEController.text);
+//                       Navigator.of(context).pop();
+//                     }
+//                   },
+//                   child: const Text("Ajouter"),
+//                 ),
+//               ],
+//             );
+//           });
+//         });
+//   }
+
 //   Future<void> saveUE(String uename) async {
+//     if (widget.semestre.id == null) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text("Erreur : L'ID de la filière est manquant."),
+//           backgroundColor: Colors.red,
+//         ),
+//       );
+//       return;
+//     }
 
 //     try {
-//       bool exists = await UeService().ueExist(uename);
+//       bool exists = await UeService().ueExist(uename, widget.semestre.id!);
 //       if (exists) {
 //         ScaffoldMessenger.of(context).showSnackBar(
 //           SnackBar(
@@ -197,19 +319,18 @@
 //       }
 
 //       UE newUE = UE(
-//         nbreCredit: ,
-//         codeUE: _codeUEController.text,
-//         nomUE: _nomUEController.text,
-//         semestre: selectedSemestre,
-//         dateAjout: DateTime.now(),
-//         filiere: selectedFiliere
-//       );
+//           nomUE: uename,
+//           codeUE: _codeUEController.text,
+//           nbreCredit: 6,
+//           filiere: selectedFiliere,
+//           semestreId: widget.semestre.id, // Utilisez l'ID de la filière
+//           dateAjout: DateTime.now(),
+//           niveau: selectedNiveau);
 
-//       await UeService().createUe(newUE);
+//       await UeService().addUeToSemestre(widget.semestre.id!, newUE);
 
 //       setState(() {
-//         futureUes =
-//             UeService().getUes();
+//         futureUes = UeService().getUesBySemestre(widget.semestre.id!);
 //       });
 
 //       ScaffoldMessenger.of(context).showSnackBar(
@@ -228,236 +349,50 @@
 //     }
 //   }
 
-//   void addUE() {
+//   // Supprimer un niveau
+//   void _confirmDelete(int id) {
 //     showDialog(
 //       context: context,
 //       builder: (BuildContext context) {
-//         return StatefulBuilder(
-//           builder: (context, setState) {
-//             return AlertDialog(
-//               title: const Text("Nouvelle Session"),
-//               content: Form(
-//                 key: _formKey,
-//                 child: SingleChildScrollView(
-//                   child: Column(
-//                     children: [
-//                       // Dropdown pour sélectionner la filière
-//                       FutureBuilder<List<Filiere>>(
-//                         future: dbHelper.getFilieres(),
-//                         builder: (context, snapshot) {
-//                           if (snapshot.connectionState ==
-//                               ConnectionState.waiting) {
-//                             return const Center(
-//                                 child: CircularProgressIndicator());
-//                           } else if (snapshot.hasError) {
-//                             return Center(
-//                                 child: Text('Erreur: ${snapshot.error}'));
-//                           } else if (snapshot.hasData &&
-//                               snapshot.data!.isNotEmpty) {
-//                             final filieres = snapshot.data!;
-//                             return DropdownButtonFormField<int>(
-//                               value: selectedFiliere,
-//                               decoration: const InputDecoration(
-//                                 labelText: "Sélectionner une Filière",
-//                                 border: OutlineInputBorder(),
-//                               ),
-//                               items: filieres.map((filiere) {
-//                                 return DropdownMenuItem<int>(
-//                                   value: filiere.id,
-//                                   child: Text(filiere.nomFiliere),
-//                                 );
-//                               }).toList(),
-//                               onChanged: (value) {
-//                                 setState(() {
-//                                   selectedFiliere = value;
-//                                   selectedNiveau =
-//                                       null; // Réinitialiser le niveau sélectionné
-//                                   // Filtrer les niveaux en fonction de la filière sélectionnée
-//                                   filteredNiveaux = allNiveaux
-//                                       .where((niveau) =>
-//                                           niveau.filiereId == selectedFiliere)
-//                                       .toList();
-//                                 });
-//                               },
-//                               validator: (int? value) {
-//                                 if (value == null) {
-//                                   return "Veuillez sélectionner une Filière";
-//                                 }
-//                                 return null;
-//                               },
-//                             );
-//                           } else {
-//                             return const Center(
-//                                 child: Text("Aucune Filière trouvée."));
-//                           }
-//                         },
-//                       ),
-
-//                       const SizedBox(height: 20),
-
-//                       // FutureBuilder pour récupérer tous les niveaux
-//                       FutureBuilder<List<Niveau>>(
-//                         future: dbHelper.getNiveaux(),
-//                         builder: (context, snapshot) {
-//                           if (snapshot.connectionState ==
-//                               ConnectionState.waiting) {
-//                             return const Center(
-//                                 child: CircularProgressIndicator());
-//                           } else if (snapshot.hasError) {
-//                             return Center(
-//                                 child: Text('Erreur: ${snapshot.error}'));
-//                           } else if (snapshot.hasData &&
-//                               snapshot.data!.isNotEmpty) {
-//                             allNiveaux =
-//                                 snapshot.data!; // Stocker tous les niveaux
-//                             return DropdownButtonFormField<int>(
-//                               value: selectedNiveau,
-//                               decoration: const InputDecoration(
-//                                 labelText: "Sélectionner un Niveau",
-//                                 border: OutlineInputBorder(),
-//                               ),
-//                               items: filteredNiveaux.map((niveau) {
-//                                 return DropdownMenuItem<int>(
-//                                   value: niveau.id,
-//                                   child: Text(niveau.nomNiveau),
-//                                 );
-//                               }).toList(),
-//                               onChanged: (value) {
-//                                 setState(() {
-//                                   selectedNiveau =
-//                                       value; // Mettre à jour le niveau sélectionné
-//                                   selectedSemestre =
-//                                       null; // Réinitialiser le niveau sélectionné
-//                                   // Filtrer les Semestres en fonction du semestre sélectionné
-//                                   filtredSemestres = allSemestres
-//                                       .where((Semestre) =>
-//                                           Semestre.niveauId == selectedNiveau)
-//                                       .toList();
-//                                 });
-//                               },
-//                               validator: (int? value) {
-//                                 if (value == null) {
-//                                   return "Veuillez sélectionner un Niveau";
-//                                 }
-//                                 return null;
-//                               },
-//                             );
-//                           } else {
-//                             return const Center(
-//                                 child: Text("Aucun Niveau trouvé."));
-//                           }
-//                         },
-//                       ),
-
-//                       const SizedBox(height: 20),
-//                       // FutureBuilder pour récupérer tous les semestre
-//                       FutureBuilder<List<Semestre>>(
-//                         future: dbHelper.getSemestres(),
-//                         builder: (context, snapshot) {
-//                           if (snapshot.connectionState ==
-//                               ConnectionState.waiting) {
-//                             return const Center(
-//                                 child: CircularProgressIndicator());
-//                           } else if (snapshot.hasError) {
-//                             return Center(
-//                                 child: Text('Erreur: ${snapshot.error}'));
-//                           } else if (snapshot.hasData &&
-//                               snapshot.data!.isNotEmpty) {
-//                             allSemestres =
-//                                 snapshot.data!; // Stocker tous les Semestres
-//                             return DropdownButtonFormField<int>(
-//                               value: selectedSemestre,
-//                               decoration: const InputDecoration(
-//                                 labelText: "Sélectionner un Semestre  ",
-//                                 border: OutlineInputBorder(),
-//                               ),
-//                               items: filtredSemestres.map((semestre) {
-//                                 return DropdownMenuItem<int>(
-//                                   value: semestre.id,
-//                                   child: Text(semestre.nomSemestre),
-//                                 );
-//                               }).toList(),
-//                               onChanged: (value) {
-//                                 setState(() {
-//                                   selectedSemestre =
-//                                       value; // Mettre à jour le niveau
-//                                 });
-//                               },
-//                               validator: (int? value) {
-//                                 if (value == null) {
-//                                   return "Veuillez sélectionner un Niveau";
-//                                 }
-//                                 return null;
-//                               },
-//                             );
-//                           } else {
-//                             return const Center(
-//                                 child: Text("Aucun Niveau trouvé."));
-//                           }
-//                         },
-//                       ),
-
-//                       const SizedBox(height: 20),
-//                       TextFormField(
-//                         controller: _codeUEController,
-//                         validator: (String? value) {
-//                           if (value == null || value.isEmpty) {
-//                             return "Le champ ne doit pas être vide";
-//                           }
-//                           return null;
-//                         },
-//                         decoration: InputDecoration(
-//                           labelText: "Code UE",
-//                           prefixIcon: const Icon(Icons.timeline),
-//                           border: OutlineInputBorder(
-//                             borderRadius: BorderRadius.circular(12),
-//                           ),
-//                         ),
-//                       ),
-//                       const SizedBox(height: 25),
-//                       TextFormField(
-//                         controller: _nomUEController,
-//                         validator: (String? value) {
-//                           if (value == null || value.isEmpty) {
-//                             return "Le champ ne doit pas être vide";
-//                           }
-//                           return null;
-//                         },
-//                         decoration: InputDecoration(
-//                           labelText: "Nom UE",
-//                           prefixIcon: const Icon(Icons.timeline),
-//                           border: OutlineInputBorder(
-//                             borderRadius: BorderRadius.circular(12),
-//                           ),
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
+//         return AlertDialog(
+//           title: const Text("Confirmation"),
+//           content:
+//               const Text("Êtes-vous sûr de vouloir supprimer ce Semestre ?"),
+//           actions: [
+//             TextButton(
+//               onPressed: () {
+//                 Navigator.of(context).pop(); // Ferme la boîte de dialogue
+//               },
+//               child: const Text('Annuler'),
+//             ),
+//             TextButton(
+//               onPressed: () {
+//                 // Appel à la méthode de suppression
+//                 SemestreService().deleteSemestre(id).then((_) {
+//                   // Rafraîchir la liste des niveaux
+//                   setState(() {
+//                     futureUes =
+//                         UeService().getUesBySemestre(widget.semestre.id!);
+//                   });
+//                   ScaffoldMessenger.of(context).showSnackBar(
+//                     SnackBar(
+//                       content: Text("Semestre supprimé avec succès"),
+//                       backgroundColor: Colors.green,
+//                     ),
+//                   );
+//                 }).catchError((error) {
+//                   ScaffoldMessenger.of(context).showSnackBar(
+//                     SnackBar(content: Text("Erreur : $error")),
+//                   );
+//                 });
+//                 Navigator.of(context).pop(); // Ferme la boîte de dialogue
+//               },
+//               child: Text(
+//                 'Supprimer',
+//                 style: TextStyle(color: myredColor),
 //               ),
-//               actions: [
-//                 TextButton(
-//                   onPressed: () {
-//                     Navigator.of(context).pop(); // Close the dialog
-//                   },
-//                   child: const Text(
-//                     'Annuler',
-//                     style: TextStyle(color: Colors.red),
-//                   ),
-//                 ),
-//                 TextButton(
-//                   onPressed: () {
-//                     saveUE();
-//                     Navigator.of(context).pop();
-//                   },
-//                   child: Text(
-//                     'Enregistrer',
-//                     style: TextStyle(color: myblueColor),
-//                   ),
-//                 ),
-//               ],
-//             );
-//           },
+//             ),
+//           ],
 //         );
 //       },
 //     );
